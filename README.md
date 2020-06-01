@@ -49,9 +49,7 @@ The final architecture consists of: a normalization layer; 3 convolutional layer
 
 Padding is 'valid' where applicable throughout.
 
-The input data is 66x220 pixel 3-channel RGB images (as opposed to YUV images as used in the NVIDIA paper) which go through a Keras lambda layer where it is normalized to a zero mean distribution between -0.5 and 0.5 using:
-
-$$ x_{norm} = \frac{x}{255} - 0.5 $$
+The input data is 66x220 pixel 3-channel RGB images (as opposed to YUV images as used in the NVIDIA paper) which go through a Keras lambda layer where it is normalized to a zero mean distribution between -0.5 and 0.5.
 
 Each of the convolutional and fully connected layers, except for the final fully connected layer, have RELU activation functions to introduce non-linearity to the model.
 
