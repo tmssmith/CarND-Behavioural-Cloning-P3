@@ -17,11 +17,13 @@ with open('./data/driving_log.csv') as csvfile:
     for line in reader:
         samples.append(line)
 
+# Split samples into training and validation
 train_data, valid_data = train_test_split(samples, test_size=0.2)
 
+# Generator to prepare batches of images as required without loading all images into memory
 def generator(samples, batch_size=32):
     num_samples = len(samples)    
-    steer_correction = [0, 0.35, -0.35]
+    steer_correction = [0, 0.35, -0.35]  # offsets for center left and right camera angles
     while True: # Loop forever so the generator never terminates
         shuffle(samples)
         for offset in range(0, num_samples, batch_size):
@@ -48,10 +50,7 @@ batch_size = 32
 train_gen = generator(train_data, batch_size)
 valid_gen = generator(valid_data, batch_size)
 
-# def rgb2yuv(x):
-#     return tf.image.rgb_to_yuv(x)
-### Build Model
-
+### Build NVIDIA model
 model = Sequential()
 # Normalise inputs to 0 - 1
 model.add(Lambda(lambda x: x/255.0, input_shape=(160,320,3)))
@@ -96,6 +95,3 @@ model.fit_generator(train_gen, steps_per_epoch=len(train_data)*6/batch_size, epo
                     validation_data=valid_gen, validation_steps=len(valid_data)*6/batch_size)
 
 model.save('model_nvidia_drop3.h5')
-
-
-    
