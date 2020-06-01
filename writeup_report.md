@@ -16,7 +16,7 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/placeholder.png "Model Visualization"
+[image1]: ./cnn-architecture.png "Netwok Archicture"
 [image2]: ./examples/placeholder.png "Grayscaling"
 [image3]: ./examples/placeholder_small.png "Recovery Image"
 [image4]: ./examples/placeholder_small.png "Recovery Image"
@@ -36,7 +36,7 @@ My project includes the following files:
 * model.py containing the script to create and train the model
 * drive.py for driving the car in autonomous mode
 * model.h5 containing a trained convolution neural network 
-* writeup_report.md or writeup_report.pdf summarizing the results
+* writeup_report.md summarizing the results
 
 #### 2. Submission includes functional code
 Using the Udacity provided simulator and my drive.py file, the car can be driven autonomously around the track by executing 
@@ -52,76 +52,50 @@ The model.py file contains the code for training and saving the convolution neur
 
 #### 1. An appropriate model architecture has been employed
 
-My model consists of a convolution neural network with 3x3 filter sizes and depths between 32 and 128 (model.py lines 18-24) 
+My model consists of a convolution neural network which is heavily based on the NVIDIA model described [here](https://devblogs.nvidia.com/deep-learning-self-driving-cars/). The model is defined in model.py lines 53-88.
 
-The model includes RELU layers to introduce nonlinearity (code line 20), and the data is normalized in the model using a Keras lambda layer (code line 18). 
+The network architecture is represented by the image below, taken from the NVIDIA paper referenced above.
+
+![Network architecture][image1]
+
+The final architecture consists of: a normalization layer; 3 convolutional layers with 5x5 kernel size and 2x2 stride; 2 convolutional layers with 3x3 kernel size and 1x1 stride; and 3 fully connected layers.
+
+Padding is 'valid' where applicable throughout.
+
+The input data is 66x220 pixel 3-channel RGB images (as opposed to YUV images as used in the NVIDIA paper) which go through a Keras lambda layer where it is normalized to a zero mean distribution between -0.5 and 0.5 using:
+
+$$ x_{norm} = \frac{x}{255} - 0.5 $$
+
+Each of the convolutional and fully connected layers, except for the final fully connected layer, have RELU activation functions to introduce non-linearity to the model.
+
+Other network architectures were assessed but the NVIDIA model was found to perform best at driving in autonomous mode, although other more complex architecures did have lower training and validation losses. The other networks investigated were: LeNet, VGG16 and Inception Resnet. VGG16 and Inception Resnet were imported with weights trained on the ImageNet database, with the final layer removed and replaced by a global average pooling layer. A fully connected layer with one output was then added and the weights of this layer were trained using the Udacity provided dataset. These models can also be found in the repository.
 
 #### 2. Attempts to reduce overfitting in the model
 
-The model contains dropout layers in order to reduce overfitting (model.py lines 21). 
+The model includes dropout layers after all convolutional and fully connected layers except for the final fully connected layer. A dropout layer is also used before the first convolutional layer to reduce overfitting.
 
-The model was trained and validated on different data sets to ensure that the model was not overfitting (code line 10-16). The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
+The dataset was also augmented to reduce overfitting. The augmentation technique applied is to flip all images left to right, simulating driving around the circuit in the opposite direction. Steering angles for flipped images are mutliplied by a factor of -1 to reverse the direction. This technique is applied to all images in the dataset, including the left, center and right camera angles.
 
 #### 3. Model parameter tuning
 
-The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 25).
+The model used an adam optimizer, so the learning rate was not tuned manually. The model was optimised against a mean square error loss function (model.py line 88). The model was trained for 2 epochs as trials showed that the validation loss started to fluctuate if more than 2 epochs were used, indicating overfitting.
 
 #### 4. Appropriate training data
 
-Training data was chosen to keep the vehicle driving on the road. I used a combination of center lane driving, recovering from the left and right sides of the road ... 
+Due to hardware constraints only used the Udacity provided dataset was used for this project. The training data proivded includes three camera views for each frame: left, center and right of vehicle.  The left and right angles are used to improve the generality of the model and improve its ability to return to the center of the lane. For these images, the steering angle was adjusted from the center angle by +/- 0.35 for the left and right images respectively.
 
-For details about how I created the training data, see the next section. 
+The training data available was split into training and validation datasets with a 80:20 split (model.py line 21) to allow training performance to be better assessed. After augmenting the data there were to many training images to load into memory at once and so a Python generator was used to only load and augment images as they were required by the training (model.py lines 23-47).
 
-### Model Architecture and Training Strategy
+The input images were cropped to remove areas of the image that don't contain information relevant to steering angles (model.py line 60) and resized to the NVIDIA network input size of 66x200.
 
-#### 1. Solution Design Approach
+#### 5. Outcome
 
-The overall strategy for deriving a model architecture was to ...
+The model was trained as outlined above and tested by driving the vehicle in autonomous mode in the simulator. The results can be seen in two videos: run1.mp4 for track 1 and run2.mp4 for track 2.
 
-My first step was to use a convolution neural network model similar to the ... I thought this model might be appropriate because ...
+On track 1 the model performed well and the car remains on track at all times and, subjectively, drives with a smooth and controlled style.
 
-In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. This implied that the model was overfitting. 
+On track 2 the model struggles more and leaves the road after a few turns. The model is unable to recover from this point. 
 
-To combat the overfitting, I modified the model so that ...
+#### 6. Future work and improvements
 
-Then I ... 
-
-The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle fell off the track... to improve the driving behavior in these cases, I ....
-
-At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
-
-#### 2. Final Model Architecture
-
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
-
-Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
-
-![alt text][image1]
-
-#### 3. Creation of the Training Set & Training Process
-
-To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
-
-![alt text][image2]
-
-I then recorded the vehicle recovering from the left side and right sides of the road back to center so that the vehicle would learn to .... These images show what a recovery looks like starting from ... :
-
-![alt text][image3]
-![alt text][image4]
-![alt text][image5]
-
-Then I repeated this process on track two in order to get more data points.
-
-To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
-
-![alt text][image6]
-![alt text][image7]
-
-Etc ....
-
-After the collection process, I had X number of data points. I then preprocessed this data by ...
-
-
-I finally randomly shuffled the data set and put Y% of the data into a validation set. 
-
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.
+The performance of the trained model on track 2 was unsatisfactory. To improve the performance more data could be collected, including from track 2, and additional data augmentation techniques to employed to increase the size of the dataset. This is expected to lead to better results with more complex network architectures, which are prone to overfitting with the current dataset.
